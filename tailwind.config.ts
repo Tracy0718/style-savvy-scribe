@@ -52,6 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+                fashion: {
+                    pink: '#FF3366',
+                    beige: '#F5F5DC',
+                    charcoal: '#36454F',
+                    sage: '#9CAF88',
+                    lavender: '#E6E6FA',
+                },
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
