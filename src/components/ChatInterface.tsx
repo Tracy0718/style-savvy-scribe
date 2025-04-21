@@ -85,12 +85,29 @@ const ChatInterface = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
+    if (!isFashionRelated(input)) {
+      toast({
+        title: "Sorry!",
+        description: "I can only answer questions related to fashion. Please ask something about trends, outfits, style, or similar topics!",
+        variant: "destructive",
+      });
+      setInput("");
+      return;
+    }
     addUserMessage(input);
     setInput("");
     await sendToApi(input);
   };
 
   const handleOptionClick = async (option: string) => {
+    if (!isFashionRelated(option)) {
+      toast({
+        title: "Sorry!",
+        description: "I can only answer questions related to fashion. Please ask something about trends, outfits, style, or similar topics!",
+        variant: "destructive",
+      });
+      return;
+    }
     addUserMessage(option);
     await sendToApi(option);
   };
@@ -203,6 +220,16 @@ const ChatInterface = () => {
     if (greeting) {
       setOptions(greeting.options);
     }
+  };
+
+  const isFashionRelated = (text: string): boolean => {
+    const keywords = [
+      "fashion", "style", "clothes", "clothing", "outfit", "trend", "designer", "haute couture", "streetwear",
+      "wardrobe", "look", "runway", "apparel", "season", "accessory", "shopping", "wear", "brand", "tips", "blog",
+      "inspiration", "dress", "footwear", "sneaker", "bag", "jewelry", "beauty", "textile", "menswear", "womenswear"
+    ];
+    const textLower = text.toLowerCase();
+    return keywords.some((word) => textLower.includes(word));
   };
 
   return (
