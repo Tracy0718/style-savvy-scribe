@@ -15,7 +15,7 @@ import {
 } from "@/data/mockFashionData";
 import { api, ChatMessage as APIChatMessage } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
 
 interface Message {
   id: string;
@@ -35,6 +35,7 @@ const ChatInterface = () => {
   const [userPreferences, setUserPreferences] = useState<UserPreference[]>([]);
   const [loading, setLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<APIChatMessage[]>([]);
+  const [showPhotos, setShowPhotos] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,6 +84,9 @@ const ChatInterface = () => {
     setChatHistory(prev => [...prev, { role: "user", content: text }]);
   };
 
+  const shouldShowPhotos = (text: string) =>
+    /(photo|see (photos|pictures)|show( me)? (photos|pictures|articles))/i.test(text);
+
   const handleSendMessage = async () => {
     if (!input.trim()) return;
     if (!isFashionRelated(input)) {
@@ -96,7 +100,8 @@ const ChatInterface = () => {
     }
     addUserMessage(input);
     setInput("");
-    await sendToApi(input);
+    setShowPhotos(shouldShowPhotos(input));
+    await sendToApi(input, shouldShowPhotos(input));
   };
 
   const handleOptionClick = async (option: string) => {
@@ -109,10 +114,11 @@ const ChatInterface = () => {
       return;
     }
     addUserMessage(option);
-    await sendToApi(option);
+    setShowPhotos(shouldShowPhotos(option));
+    await sendToApi(option, shouldShowPhotos(option));
   };
 
-  const sendToApi = async (userInput: string) => {
+  const sendToApi = async (userInput: string, showPhotosFlag: boolean) => {
     setLoading(true);
     setOptions([]);
     try {
@@ -132,36 +138,37 @@ const ChatInterface = () => {
         setRecommendedPosts([]);
         setShowingResults(false);
       }
+      setShowPhotos(showPhotosFlag);
     } catch (err: any) {
       toast({
         title: "Network error",
         description: "Failed to connect to backend. Showing mock recommendations.",
         variant: "destructive",
       });
-      processUserInput(userInput);
+      processUserInput(userInput, showPhotosFlag);
     } finally {
       setLoading(false);
     }
   };
 
-  const processUserInput = (text: string) => {
+  const processUserInput = (text: string, showPhotosFlag: boolean) => {
     if (currentFlow === "greeting") {
       if (text.toLowerCase().includes("latest trends") || text.toLowerCase().includes("trend")) {
-        addBotMessage("Here are the latest fashion trends based on recent blog posts:");
-        showBlogResults(MOCK_BLOG_POSTS.filter(post => post.tags.includes("Trending")));
+        addBotMessage("Here are the latest fashion trends based on recent articles:");
+        showBlogResults(MOCK_BLOG_POSTS.filter(post => post.tags.includes("Trending")), showPhotosFlag);
       } else if (text.toLowerCase().includes("fashion tips") || text.toLowerCase().includes("tips")) {
-        addBotMessage("I've found these helpful fashion tips from popular blogs:");
-        showBlogResults(MOCK_BLOG_POSTS.slice(0, 3));
+        addBotMessage("I've found these helpful fashion tips:");
+        showBlogResults(MOCK_BLOG_POSTS.slice(0, 3), showPhotosFlag);
       } else if (text.toLowerCase().includes("style inspiration") || text.toLowerCase().includes("inspiration")) {
-        addBotMessage("Looking for inspiration? Check out these posts:");
-        showBlogResults(MOCK_BLOG_POSTS.slice(2, 5));
+        addBotMessage("Looking for inspiration? Here are a few picks:");
+        showBlogResults(MOCK_BLOG_POSTS.slice(2, 5), showPhotosFlag);
       } else if (text.toLowerCase().includes("preference") || text.toLowerCase().includes("set")) {
         setShowPreferences(true);
         setOptions([]);
       } else {
         const randomPosts = [...MOCK_BLOG_POSTS].sort(() => 0.5 - Math.random()).slice(0, 3);
-        addBotMessage("Here are some fashion articles you might find interesting:");
-        showBlogResults(randomPosts);
+        addBotMessage("Here are some fashion articles you might like:");
+        showBlogResults(randomPosts, showPhotosFlag);
       }
     } else if (currentFlow === "preferences") {
       const preferenceFlow = CHATBOT_FLOWS.find(flow => flow.id === "season_preference");
@@ -179,15 +186,12 @@ const ChatInterface = () => {
       }
     } else if (currentFlow === "tag_preference") {
       addBotMessage("Thanks for setting your preferences! Here are some personalized recommendations:");
-      
       const newPreferences = [
         { id: "tag", name: "Fashion Tag", value: text }
       ];
-      
       setUserPreferences(newPreferences);
       const personalizedPosts = getRecommendedPosts(newPreferences);
-      showBlogResults(personalizedPosts);
-      
+      showBlogResults(personalizedPosts, showPhotosFlag);
       setCurrentFlow("greeting");
       const greeting = CHATBOT_FLOWS.find(flow => flow.id === "greeting");
       if (greeting) {
@@ -196,9 +200,10 @@ const ChatInterface = () => {
     }
   };
 
-  const showBlogResults = (posts: BlogPost[]) => {
+  const showBlogResults = (posts: BlogPost[], displayMode: boolean) => {
     setRecommendedPosts(posts);
     setShowingResults(true);
+    setShowPhotos(displayMode);
     setOptions([]);
     setTimeout(() => {
       scrollToBottom();
@@ -207,14 +212,11 @@ const ChatInterface = () => {
 
   const handlePreferencesChange = (newPreferences: UserPreference[]) => {
     setUserPreferences(newPreferences);
-    
     if (newPreferences.length > 0) {
       const personalizedPosts = getRecommendedPosts(newPreferences);
-      
       addBotMessage("Based on your preferences, here are some personalized recommendations:");
-      showBlogResults(personalizedPosts);
+      showBlogResults(personalizedPosts, false);
     }
-    
     setCurrentFlow("greeting");
     const greeting = CHATBOT_FLOWS.find(flow => flow.id === "greeting");
     if (greeting) {
@@ -232,17 +234,50 @@ const ChatInterface = () => {
     return keywords.some((word) => textLower.includes(word));
   };
 
+  const CompactArticleList = ({ posts }: { posts: BlogPost[] }) => (
+    <div className="my-3 space-y-2 ml-2">
+      {posts.map(post => (
+        <div 
+          key={post.id} 
+          className="flex items-center gap-2 border-l-4 border-fashion-pink bg-muted/70 rounded p-2"
+        >
+          <a 
+            href={post.url}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-semibold text-sm story-link text-fashion-pink"
+          >
+            {post.title}
+          </a>
+          <span className="text-xs text-muted-foreground ml-2">
+            {post.source}
+          </span>
+        </div>
+      ))}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="mt-2 text-xs px-3 py-1.5"
+        onClick={() => setShowPhotos(true)}
+      >
+        Show Photos
+      </Button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
-      <Card className="flex-1 flex flex-col overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b">
-          <CardTitle className="text-xl text-center text-fashion-pink">
+      <Card className="flex-1 flex flex-col overflow-hidden shadow-xl border-2 border-fashion-pink/20 bg-gradient-to-bl from-secondary/10 to-fashion-beige/40 backdrop-blur-2xl">
+        <CardHeader className="px-6 py-4 border-b bg-gradient-to-r from-fashion-lavender/40 to-white/10 flex items-center gap-2">
+          <MessageSquare className="text-fashion-pink mr-2" />
+          <CardTitle className="text-xl text-center text-fashion-pink font-playfair tracking-tight drop-shadow">
             Style Savvy Scribe
           </CardTitle>
         </CardHeader>
         
         <CardContent className="flex-1 overflow-y-auto p-0">
-          <div className="flex flex-col p-4">
+          <div className="flex flex-col p-4 relative">
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-fashion-beige via-white/70 via-30% to-transparent opacity-40 -z-10" />
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -270,9 +305,22 @@ const ChatInterface = () => {
             
             {showingResults && (
               <div className="my-4 space-y-4">
-                {recommendedPosts.map((post) => (
-                  <BlogPostCard key={post.id} post={post} />
-                ))}
+                {!showPhotos ? (
+                  <CompactArticleList posts={recommendedPosts} />
+                ) : (
+                  <>
+                    {recommendedPosts.map((post) => (
+                      <BlogPostCard key={post.id} post={post} />
+                    ))}
+                    <Button 
+                      onClick={() => setShowPhotos(false)}
+                      className="w-full mt-2"
+                      variant="secondary"
+                    >
+                      Hide Photos
+                    </Button>
+                  </>
+                )}
                 <Button 
                   onClick={() => {
                     setShowingResults(false);
@@ -285,6 +333,7 @@ const ChatInterface = () => {
                     addBotMessage("Is there anything else you'd like to explore?");
                   }}
                   className="w-full mt-2"
+                  variant="outline"
                 >
                   Back to Chat
                 </Button>
@@ -295,7 +344,7 @@ const ChatInterface = () => {
           </div>
         </CardContent>
         
-        <div className="p-4 border-t flex gap-2">
+        <div className="p-4 border-t flex gap-2 bg-gradient-to-r from-fashion-lavender/10 via-white/60 to-white/20">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
