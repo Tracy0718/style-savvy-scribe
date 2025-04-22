@@ -36,6 +36,8 @@ const ChatInterface = () => {
   const [loading, setLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<APIChatMessage[]>([]);
   const [showPhotos, setShowPhotos] = useState(false);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('perplexity_api_key') || '');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem('perplexity_api_key'));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -323,113 +325,145 @@ const ChatInterface = () => {
     </div>
   );
 
+  const handleApiKeySubmit = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem('perplexity_api_key', apiKey.trim());
+      setShowApiKeyInput(false);
+      toast({
+        title: "API Key Saved",
+        description: "Your API key has been saved successfully.",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto">
       <Card className="flex-1 flex flex-col overflow-hidden shadow-xl border-2 border-fashion-pink/20 bg-gradient-to-bl from-secondary/10 to-fashion-beige/40 backdrop-blur-2xl">
-        <CardHeader className="px-6 py-4 border-b bg-gradient-to-r from-fashion-lavender/40 to-white/10 flex items-center gap-2">
-          <MessageSquare className="text-fashion-pink mr-2" />
-          <CardTitle className="text-xl text-center text-fashion-pink font-playfair tracking-tight drop-shadow">
-            Style Savvy Scribe
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="flex-1 overflow-y-auto p-0">
-          <div className="flex flex-col p-4 relative">
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-fashion-beige via-white/70 via-30% to-transparent opacity-40 -z-10" />
-            {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message.text}
-                isBot={message.isBot}
-                timestamp={message.timestamp}
+        {showApiKeyInput ? (
+          <div className="p-4 space-y-4">
+            <h3 className="text-lg font-semibold text-center">Enter Perplexity API Key</h3>
+            <div className="flex gap-2">
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter your Perplexity API key..."
+                className="flex-1"
               />
-            ))}
-            {loading && (
-              <div className="flex justify-center my-2">
-                <Loader2 className="animate-spin text-fashion-pink" />
-              </div>
-            )}
-            {options.length > 0 && (
-              <div className="flex flex-wrap my-2 ml-12">
-                {options.map((option) => (
-                  <ChatOption
-                    key={option}
-                    text={option}
-                    onClick={handleOptionClick}
+              <Button onClick={handleApiKeySubmit}>Save Key</Button>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              This is temporary. Please add your API key to Supabase secrets for production use.
+            </p>
+          </div>
+        ) : (
+          <>
+            <CardHeader className="px-6 py-4 border-b bg-gradient-to-r from-fashion-lavender/40 to-white/10 flex items-center gap-2">
+              <MessageSquare className="text-fashion-pink mr-2" />
+              <CardTitle className="text-xl text-center text-fashion-pink font-playfair tracking-tight drop-shadow">
+                Style Savvy Scribe
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="flex-1 overflow-y-auto p-0">
+              <div className="flex flex-col p-4 relative">
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-fashion-beige via-white/70 via-30% to-transparent opacity-40 -z-10" />
+                {messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message.text}
+                    isBot={message.isBot}
+                    timestamp={message.timestamp}
                   />
                 ))}
-              </div>
-            )}
-            
-            {showingResults && (
-              <div className="my-4 space-y-4">
-                {!showPhotos ? (
-                  <CompactArticleList posts={recommendedPosts} />
-                ) : (
-                  <>
-                    {recommendedPosts.map((post) => (
-                      <BlogPostCard key={post.id} post={post} />
-                    ))}
-                    <Button 
-                      onClick={() => setShowPhotos(false)}
-                      className="w-full mt-2"
-                      variant="secondary"
-                    >
-                      Hide Photos
-                    </Button>
-                  </>
+                {loading && (
+                  <div className="flex justify-center my-2">
+                    <Loader2 className="animate-spin text-fashion-pink" />
+                  </div>
                 )}
-                <Button 
-                  onClick={() => {
-                    setShowingResults(false);
-                    setOptions([
-                      "Show me the latest trends",
-                      "Give me some fashion tips",
-                      "I want style inspiration",
-                      "Set my preferences",
-                    ]);
-                    addBotMessage("Is there anything else you'd like to explore?");
-                  }}
-                  className="w-full mt-2"
-                  variant="outline"
-                >
-                  Back to Chat
-                </Button>
+                {options.length > 0 && (
+                  <div className="flex flex-wrap my-2 ml-12">
+                    {options.map((option) => (
+                      <ChatOption
+                        key={option}
+                        text={option}
+                        onClick={handleOptionClick}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {showingResults && (
+                  <div className="my-4 space-y-4">
+                    {!showPhotos ? (
+                      <CompactArticleList posts={recommendedPosts} />
+                    ) : (
+                      <>
+                        {recommendedPosts.map((post) => (
+                          <BlogPostCard key={post.id} post={post} />
+                        ))}
+                        <Button 
+                          onClick={() => setShowPhotos(false)}
+                          className="w-full mt-2"
+                          variant="secondary"
+                        >
+                          Hide Photos
+                        </Button>
+                      </>
+                    )}
+                    <Button 
+                      onClick={() => {
+                        setShowingResults(false);
+                        setOptions([
+                          "Show me the latest trends",
+                          "Give me some fashion tips",
+                          "I want style inspiration",
+                          "Set my preferences",
+                        ]);
+                        addBotMessage("Is there anything else you'd like to explore?");
+                      }}
+                      className="w-full mt-2"
+                      variant="outline"
+                    >
+                      Back to Chat
+                    </Button>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            )}
+            </CardContent>
             
-            <div ref={messagesEndRef} />
-          </div>
-        </CardContent>
-        
-        <div className="p-4 border-t flex gap-2 bg-gradient-to-r from-fashion-lavender/10 via-white/60 to-white/20">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about fashion trends or styles..."
-            className="flex-1"
-            disabled={loading}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSendMessage();
-              }
-            }}
-          />
-          <Button 
-            onClick={handleSendMessage} 
-            className="bg-fashion-pink hover:bg-fashion-pink/90"
-            disabled={loading}
-          >
-            Send
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowPreferences(true)}
-            disabled={loading}
-          >
-            Preferences
-          </Button>
-        </div>
+            <div className="p-4 border-t flex gap-2 bg-gradient-to-r from-fashion-lavender/10 via-white/60 to-white/20">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about fashion trends or styles..."
+                className="flex-1"
+                disabled={loading}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleSendMessage} 
+                className="bg-fashion-pink hover:bg-fashion-pink/90"
+                disabled={loading}
+              >
+                Send
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPreferences(true)}
+                disabled={loading}
+              >
+                Preferences
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
       
       {showPreferences && (
