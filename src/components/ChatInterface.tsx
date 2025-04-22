@@ -89,16 +89,48 @@ const ChatInterface = () => {
 
   const handleSimpleGreeting = (text: string) => {
     const greetings = {
-      hi: "Hi there! I'm here to chat about fashion. What would you like to know?",
-      hello: "Hello! I'd love to discuss fashion with you. What's on your mind?",
-      "how are you": "I'm doing great! Ready to talk about fashion and style. What can I help you with?",
-      "hey": "Hey! Let's talk about fashion. What would you like to know?",
+      hi: {
+        response: "Hi there! I'm excited to chat about fashion with you. Are you looking for:",
+        options: [
+          "Latest fashion trends",
+          "Personal style advice",
+          "Fashion tips for an occasion",
+          "Shopping recommendations"
+        ]
+      },
+      hello: {
+        response: "Hello! I'd love to discuss fashion with you. What interests you most:",
+        options: [
+          "Seasonal fashion trends",
+          "Wardrobe essentials",
+          "Style inspiration",
+          "Fashion tips"
+        ]
+      },
+      "how are you": {
+        response: "I'm doing great! Ready to talk about all things fashion. What would you like to explore:",
+        options: [
+          "Current fashion trends",
+          "Style advice",
+          "Fashion inspiration",
+          "Wardrobe tips"
+        ]
+      },
+      hey: {
+        response: "Hey! Let's dive into fashion topics. What catches your interest:",
+        options: [
+          "Latest trends",
+          "Personal styling",
+          "Fashion advice",
+          "Style inspiration"
+        ]
+      }
     };
 
     const textLower = text.toLowerCase();
-    for (const [key, response] of Object.entries(greetings)) {
+    for (const [key, value] of Object.entries(greetings)) {
       if (textLower.includes(key)) {
-        return response;
+        return value;
       }
     }
     return null;
@@ -123,7 +155,8 @@ const ChatInterface = () => {
     const greetingResponse = handleSimpleGreeting(input);
     if (greetingResponse) {
       addUserMessage(input);
-      addBotMessage(greetingResponse);
+      addBotMessage(greetingResponse.response);
+      setOptions(greetingResponse.options);
       setInput("");
       return;
     }
