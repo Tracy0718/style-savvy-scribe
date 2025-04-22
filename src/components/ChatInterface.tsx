@@ -85,44 +85,40 @@ const ChatInterface = () => {
   };
 
   const shouldShowPhotos = (text: string) =>
-    /(photo|see (photos|pictures)|show( me)? (photos|pictures|articles))/i.test(text);
+    /(outfit|visual|look|photo|picture|image|trends|show|see)/i.test(text.toLowerCase());
 
   const handleSimpleGreeting = (text: string) => {
     const greetings = {
       hi: {
-        response: "Hi there! I'm excited to chat about fashion with you. Are you looking for:",
+        response: "Welcome! What fashion advice can I help you with today?",
         options: [
-          "Latest fashion trends",
-          "Personal style advice",
-          "Fashion tips for an occasion",
-          "Shopping recommendations"
+          "Show me trendy outfits",
+          "Need style tips",
+          "Looking for fashion inspiration"
         ]
       },
       hello: {
-        response: "Hello! I'd love to discuss fashion with you. What interests you most:",
+        response: "Hi! What specific fashion guidance do you need?",
         options: [
-          "Seasonal fashion trends",
-          "Wardrobe essentials",
-          "Style inspiration",
-          "Fashion tips"
+          "Latest fashion trends",
+          "Outfit recommendations",
+          "Styling help"
         ]
       },
       "how are you": {
-        response: "I'm doing great! Ready to talk about all things fashion. What would you like to explore:",
+        response: "I'm here to help! What fashion topic interests you?",
         options: [
-          "Current fashion trends",
-          "Style advice",
-          "Fashion inspiration",
-          "Wardrobe tips"
+          "Current trends 2025",
+          "Personal styling tips",
+          "Outfit ideas"
         ]
       },
       hey: {
-        response: "Hey! Let's dive into fashion topics. What catches your interest:",
+        response: "Hey! Let me help you with fashion. What do you need?",
         options: [
-          "Latest trends",
-          "Personal styling",
+          "Show trending styles",
           "Fashion advice",
-          "Style inspiration"
+          "Outfit inspiration"
         ]
       }
     };
@@ -151,7 +147,6 @@ const ChatInterface = () => {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
-    // Check for simple greetings first
     const greetingResponse = handleSimpleGreeting(input);
     if (greetingResponse) {
       addUserMessage(input);
@@ -161,7 +156,6 @@ const ChatInterface = () => {
       return;
     }
 
-    // If not a greeting, check if fashion-related
     if (!isFashionRelated(input)) {
       toast({
         title: "Sorry!",
