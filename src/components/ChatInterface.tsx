@@ -87,8 +87,48 @@ const ChatInterface = () => {
   const shouldShowPhotos = (text: string) =>
     /(photo|see (photos|pictures)|show( me)? (photos|pictures|articles))/i.test(text);
 
+  const handleSimpleGreeting = (text: string) => {
+    const greetings = {
+      hi: "Hi there! I'm here to chat about fashion. What would you like to know?",
+      hello: "Hello! I'd love to discuss fashion with you. What's on your mind?",
+      "how are you": "I'm doing great! Ready to talk about fashion and style. What can I help you with?",
+      "hey": "Hey! Let's talk about fashion. What would you like to know?",
+    };
+
+    const textLower = text.toLowerCase();
+    for (const [key, response] of Object.entries(greetings)) {
+      if (textLower.includes(key)) {
+        return response;
+      }
+    }
+    return null;
+  };
+
+  const isFashionRelated = (text: string): boolean => {
+    const keywords = [
+      "fashion", "style", "clothes", "clothing", "outfit", "trend", "designer", 
+      "haute couture", "streetwear", "wardrobe", "look", "runway", "apparel", 
+      "season", "accessory", "shopping", "wear", "brand", "tips", "blog",
+      "inspiration", "dress", "footwear", "sneaker", "bag", "jewelry", "beauty", 
+      "textile", "menswear", "womenswear"
+    ];
+    const textLower = text.toLowerCase();
+    return keywords.some((word) => textLower.includes(word));
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim()) return;
+
+    // Check for simple greetings first
+    const greetingResponse = handleSimpleGreeting(input);
+    if (greetingResponse) {
+      addUserMessage(input);
+      addBotMessage(greetingResponse);
+      setInput("");
+      return;
+    }
+
+    // If not a greeting, check if fashion-related
     if (!isFashionRelated(input)) {
       toast({
         title: "Sorry!",
@@ -98,6 +138,7 @@ const ChatInterface = () => {
       setInput("");
       return;
     }
+
     addUserMessage(input);
     setInput("");
     setShowPhotos(shouldShowPhotos(input));
@@ -222,16 +263,6 @@ const ChatInterface = () => {
     if (greeting) {
       setOptions(greeting.options);
     }
-  };
-
-  const isFashionRelated = (text: string): boolean => {
-    const keywords = [
-      "fashion", "style", "clothes", "clothing", "outfit", "trend", "designer", "haute couture", "streetwear",
-      "wardrobe", "look", "runway", "apparel", "season", "accessory", "shopping", "wear", "brand", "tips", "blog",
-      "inspiration", "dress", "footwear", "sneaker", "bag", "jewelry", "beauty", "textile", "menswear", "womenswear"
-    ];
-    const textLower = text.toLowerCase();
-    return keywords.some((word) => textLower.includes(word));
   };
 
   const CompactArticleList = ({ posts }: { posts: BlogPost[] }) => (
