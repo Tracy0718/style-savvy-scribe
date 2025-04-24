@@ -1,6 +1,7 @@
 
 import axios from "axios";
 import { BlogPost, UserPreference } from "@/data/mockFashionData";
+import { toast } from "@/hooks/use-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL;
@@ -35,24 +36,23 @@ export const api = {
       });
 
       if (!response.ok) {
-        throw new Error('Supabase function failed');
+        throw new Error(`Supabase function failed: ${response.statusText}`);
       }
 
       const data = await response.json();
       return data as ChatResponse;
     } catch (error) {
-      // Fallback to the original API if Supabase function fails
-      const response = await axios.post<ChatResponse>(
-        `${API_BASE_URL}/chat`, 
-        {
-          messages,
-          user_preferences: userPreferences?.reduce((prefs, pref) => {
-            prefs[pref.name] = pref.value;
-            return prefs;
-          }, {} as Record<string, string>),
-        }
-      );
-      return response.data;
+      console.error('Chat API Error:', error);
+      
+      // Show error toast if both APIs fail
+      toast({
+        title: "Connection Error",
+        description: "Unable to connect to the fashion assistant. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Throw the error to be handled by the component
+      throw error;
     }
   },
 };

@@ -16,12 +16,22 @@ serve(async (req) => {
   try {
     const { messages, user_preferences } = await req.json();
 
-    // Enhance the system message with user preferences
+    // Enhanced system message with more context and capabilities
     const systemMessage = {
       role: 'system',
-      content: `You are a helpful and knowledgeable fashion assistant. ${
-        user_preferences ? `Consider these user preferences: ${JSON.stringify(user_preferences)}` : ''
-      }. Be precise and concise in your responses. If the user asks for visual content, recommend relevant fashion items or outfits.`
+      content: `You are a knowledgeable and friendly fashion assistant with real-time access to current fashion trends and data. 
+      ${user_preferences ? `Consider these user preferences: ${JSON.stringify(user_preferences)}` : ''}
+      
+      Guidelines:
+      1. Provide specific, actionable fashion advice
+      2. Reference current trends and seasonal recommendations
+      3. Consider user preferences when making suggestions
+      4. Be conversational but professional
+      5. If suggesting products or styles, explain why they would work
+      6. For visual requests, describe items in detail
+      7. Stay updated with 2025 fashion trends
+      
+      Remember to be precise, helpful, and engaging in your responses.`
     };
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -38,11 +48,20 @@ serve(async (req) => {
         max_tokens: 1000,
         return_images: true,
         return_related_questions: true,
+        frequency_penalty: 0.5,
+        presence_penalty: 0.5,
+        search_domain_filter: ['perplexity.ai'],
+        search_recency_filter: 'day', // Get the most recent fashion data
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`Perplexity API error: ${response.statusText}`);
+    }
+
     const data = await response.json();
 
+    // Enhanced response formatting
     return new Response(
       JSON.stringify({
         reply: data.choices[0].message.content,
@@ -53,8 +72,13 @@ serve(async (req) => {
       },
     );
   } catch (error) {
+    console.error('Edge Function Error:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        message: "Failed to process your request. Please try again."
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
