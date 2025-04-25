@@ -19,7 +19,7 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
     >
       {isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
-          <AvatarImage src="/placeholder.svg" alt="Bot" />
+          <AvatarImage src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="Bot" />
           <AvatarFallback className="bg-gradient-to-br from-fashion-pink to-fashion-sage text-white">
             <MessageSquare className="h-6 w-6" />
           </AvatarFallback>
@@ -40,7 +40,7 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
       </div>
       {!isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
-          <AvatarImage src="/placeholder.svg" alt="You" />
+          <AvatarImage src="https://images.unsplash.com/photo-1501286353178-1ec881214838" alt="You" />
           <AvatarFallback className="bg-gradient-to-br from-fashion-charcoal to-fashion-sage text-white">
             <UserRound className="h-6 w-6" />
           </AvatarFallback>
