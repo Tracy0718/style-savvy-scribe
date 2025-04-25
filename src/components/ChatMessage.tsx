@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { UserRound, MessageSquare } from "lucide-react";
+import { UserRound, Bot } from "lucide-react";
 
 export interface ChatMessageProps {
   message: string;
@@ -18,10 +18,10 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
       )}
     >
       {isBot && (
-        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
-          <AvatarImage src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="Bot" />
-          <AvatarFallback className="bg-gradient-to-br from-fashion-pink to-fashion-sage text-white">
-            <MessageSquare className="h-6 w-6" />
+        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-lg">
+          <AvatarImage src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Bot" />
+          <AvatarFallback className="bg-gradient-to-br from-[#1A1F2C] to-[#8B5CF6] text-white">
+            <Bot className="h-6 w-6" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -29,7 +29,7 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
         className={cn(
           "flex flex-col max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-lg transition-all duration-300 hover:shadow-xl message-appear backdrop-blur-sm",
           isBot
-            ? "bg-gradient-to-br from-white/90 to-fashion-lavender/80 text-fashion-charcoal border border-fashion-lavender/30"
+            ? "bg-gradient-to-br from-white/95 to-fashion-lavender/90 text-fashion-charcoal border border-fashion-lavender/30"
             : "bg-gradient-to-br from-fashion-pink to-fashion-pink/80 text-white border border-fashion-pink/20"
         )}
       >
@@ -39,9 +39,9 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
         )}
       </div>
       {!isBot && (
-        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
-          <AvatarImage src="https://images.unsplash.com/photo-1501286353178-1ec881214838" alt="You" />
-          <AvatarFallback className="bg-gradient-to-br from-fashion-charcoal to-fashion-sage text-white">
+        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-lg">
+          <AvatarImage src="https://images.unsplash.com/photo-1441057206919-63d19fac2369" alt="You" />
+          <AvatarFallback className="bg-gradient-to-br from-[#0EA5E9] to-[#8E9196] text-white">
             <UserRound className="h-6 w-6" />
           </AvatarFallback>
         </Avatar>
