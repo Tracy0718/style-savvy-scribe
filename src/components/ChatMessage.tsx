@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Lightbulb } from "lucide-react";
+import { UserRound, MessageSquare } from "lucide-react";
 
 export interface ChatMessageProps {
   message: string;
@@ -13,35 +13,37 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex w-full gap-3 p-4 animate-fade-in",
+        "flex w-full gap-4 p-4 animate-fade-in",
         isBot ? "justify-start" : "justify-end"
       )}
     >
       {isBot && (
-        <Avatar className="h-10 w-10 shadow-md border-2 border-white/50">
+        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
           <AvatarImage src="/placeholder.svg" alt="Bot" />
-          <AvatarFallback className="bg-gradient-to-br from-fashion-pink to-fashion-sage text-white text-xs flex items-center justify-center">
-            <Lightbulb className="h-5 w-5" />
+          <AvatarFallback className="bg-gradient-to-br from-fashion-pink to-fashion-sage text-white">
+            <MessageSquare className="h-6 w-6" />
           </AvatarFallback>
         </Avatar>
       )}
       <div
         className={cn(
-          "flex flex-col max-w-[85%] rounded-2xl p-4 shadow-md transition-all duration-300 scale-hover message-appear",
+          "flex flex-col max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-lg transition-all duration-300 hover:shadow-xl message-appear backdrop-blur-sm",
           isBot
-            ? "bg-gradient-to-br from-secondary/90 via-secondary/80 to-secondary/70 text-secondary-foreground border border-white/20"
-            : "bg-gradient-to-br from-fashion-pink to-fashion-pink/80 text-primary-foreground border border-fashion-pink/20"
+            ? "bg-gradient-to-br from-white/90 to-fashion-lavender/80 text-fashion-charcoal border border-fashion-lavender/30"
+            : "bg-gradient-to-br from-fashion-pink to-fashion-pink/80 text-white border border-fashion-pink/20"
         )}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
+        <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{message}</p>
         {timestamp && (
           <span className="text-xs opacity-70 mt-2 self-end">{timestamp}</span>
         )}
       </div>
       {!isBot && (
-        <Avatar className="h-10 w-10 shadow-md border-2 border-white/50">
+        <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40">
           <AvatarImage src="/placeholder.svg" alt="You" />
-          <AvatarFallback className="bg-gradient-to-br from-fashion-charcoal to-fashion-sage text-white text-xs">ME</AvatarFallback>
+          <AvatarFallback className="bg-gradient-to-br from-fashion-charcoal to-fashion-sage text-white">
+            <UserRound className="h-6 w-6" />
+          </AvatarFallback>
         </Avatar>
       )}
     </div>
