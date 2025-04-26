@@ -19,7 +19,7 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
     >
       {isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-lg">
-          <AvatarImage src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Bot" />
+          <AvatarImage src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80" alt="Fashion Assistant" />
           <AvatarFallback className="bg-gradient-to-br from-[#1A1F2C] to-[#8B5CF6] text-white">
             <Bot className="h-6 w-6" />
           </AvatarFallback>
@@ -40,7 +40,7 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
       </div>
       {!isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-lg">
-          <AvatarImage src="https://images.unsplash.com/photo-1441057206919-63d19fac2369" alt="You" />
+          <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80" alt="You" />
           <AvatarFallback className="bg-gradient-to-br from-[#0EA5E9] to-[#8E9196] text-white">
             <UserRound className="h-6 w-6" />
           </AvatarFallback>
