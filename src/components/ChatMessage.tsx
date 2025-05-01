@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { UserRound, Bot } from "lucide-react";
+import { Bot } from "lucide-react";
 
 export interface ChatMessageProps {
   message: string;
@@ -19,9 +19,9 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
     >
       {isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-xl">
-          <AvatarImage src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80" alt="Fashion Assistant" />
+          <AvatarImage src="https://images.unsplash.com/photo-1487887235947-a955ef187fcc?auto=format&fit=crop&q=80" alt="Fashion Assistant" />
           <AvatarFallback className="bg-gradient-to-br from-[#1A1F2C] to-[#8B5CF6] text-white">
-            <Bot className="h-6 w-6" />
+            <Bot className="h-6 w-6 animate-pulse" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -40,9 +40,11 @@ const ChatMessage = ({ message, isBot, timestamp }: ChatMessageProps) => {
       </div>
       {!isBot && (
         <Avatar className="h-12 w-12 ring-2 ring-fashion-pink/20 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-fashion-pink/40 shadow-xl">
-          <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80" alt="You" />
-          <AvatarFallback className="bg-gradient-to-br from-[#0EA5E9] to-[#8E9196] text-white">
-            <UserRound className="h-6 w-6" />
+          <AvatarFallback className="bg-gradient-to-br from-[#0EA5E9] to-[#8E9196] text-white animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 floating">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </AvatarFallback>
         </Avatar>
       )}
