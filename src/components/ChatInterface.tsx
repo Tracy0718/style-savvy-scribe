@@ -15,7 +15,7 @@ import {
 } from "@/data/mockFashionData";
 import { api, ChatMessage as APIChatMessage } from "@/services/api";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MessageSquare } from "lucide-react";
+import { AlertCircle, Info, Loader2, MessageSquare, Settings } from "lucide-react";
 
 interface Message {
   id: string;
@@ -38,6 +38,7 @@ const ChatInterface = () => {
   const [showPhotos, setShowPhotos] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('perplexity_api_key') || '');
   const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem('perplexity_api_key'));
+  const [connectionStatus, setConnectionStatus] = useState<'checking'|'connected'|'failed'>('checking');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +55,34 @@ const ChatInterface = () => {
         { role: "assistant", content: "Hi! I'm your personal Style Savvy Scribe. What fashion topics are you interested in?" }
       ]);
     }
+
+    // Check connection status
+    checkConnectionStatus();
   }, []);
+
+  const checkConnectionStatus = async () => {
+    setConnectionStatus('checking');
+    const supabaseFunctionUrl = import.meta.env.VITE_SUPABASE_FUNCTION_URL || "";
+    
+    try {
+      if (supabaseFunctionUrl) {
+        // Just check if the URL is reachable
+        const response = await fetch(`${supabaseFunctionUrl}/chat`, {
+          method: 'OPTIONS',
+        });
+        if (response.ok) {
+          setConnectionStatus('connected');
+          return;
+        }
+      }
+      
+      // If we've reached here, we're using fallbacks
+      setConnectionStatus('failed');
+    } catch (error) {
+      console.error("Connection check error:", error);
+      setConnectionStatus('failed');
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -192,6 +220,14 @@ const ChatInterface = () => {
     setLoading(true);
     setOptions([]);
     try {
+      // Check connection status before making request
+      if (connectionStatus === 'failed') {
+        toast({
+          title: "Connection Status",
+          description: "Using fallback mode with mock data. API connection unavailable.",
+        });
+      }
+
       const result = await api.sendChatMessage([...chatHistory, { role: "user", content: userInput }], userPreferences);
       if (result.reply) {
         addBotMessage(result.reply);
@@ -333,6 +369,8 @@ const ChatInterface = () => {
         title: "API Key Saved",
         description: "Your API key has been saved successfully.",
       });
+      // Recheck connection status after API key is set
+      checkConnectionStatus();
     }
   };
 
@@ -352,9 +390,17 @@ const ChatInterface = () => {
               />
               <Button onClick={handleApiKeySubmit}>Save Key</Button>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              This is temporary. Please add your API key to Supabase secrets for production use.
-            </p>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                This is temporary. For production use, please add your API key to Supabase Edge Function Secrets.
+              </p>
+              <p className="flex items-center gap-2 text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                Browser security restrictions prevent direct API calls to external services.
+              </p>
+              <p>The application will use mock data for demonstration if API connections fail.</p>
+            </div>
           </div>
         ) : (
           <>
@@ -363,6 +409,27 @@ const ChatInterface = () => {
               <CardTitle className="text-xl text-center text-fashion-pink font-playfair tracking-tight drop-shadow">
                 Style Savvy Scribe
               </CardTitle>
+              
+              {/* Connection status indicator */}
+              <div className="ml-auto flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-green-500' : 
+                  connectionStatus === 'failed' ? 'bg-red-500' : 'bg-amber-500'
+                }`}></div>
+                <span className="text-xs text-muted-foreground">
+                  {connectionStatus === 'connected' ? 'Connected' : 
+                   connectionStatus === 'failed' ? 'Using Fallback' : 'Checking...'}
+                </span>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8"
+                  onClick={() => setShowApiKeyInput(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             
             <CardContent className="flex-1 overflow-y-auto p-0">

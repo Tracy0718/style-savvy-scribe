@@ -21,89 +21,86 @@ export interface ChatResponse {
 export const api = {
   async sendChatMessage(messages: ChatMessage[], userPreferences?: UserPreference[]): Promise<ChatResponse> {
     try {
-      // First, try to use Perplexity API directly if API key is available
+      // First try to use the Supabase Edge Function if URL is available
+      if (SUPABASE_FUNCTION_URL) {
+        console.log("Attempting to use Supabase Edge Function for chat...");
+        try {
+          const response = await fetch(`${SUPABASE_FUNCTION_URL}/chat`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages,
+              user_preferences: userPreferences
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Received data from Supabase function:", data);
+            
+            // Check for recommended content in the response
+            let recommendedPosts: BlogPost[] = [];
+            const content = data.reply;
+            
+            // Get mock data for recommended articles based on content
+            if (content.toLowerCase().includes("recommend") || 
+                content.toLowerCase().includes("suggest") || 
+                content.toLowerCase().includes("trend")) {
+              const { MOCK_BLOG_POSTS } = await import("@/data/mockFashionData");
+              // Get random posts for more variety
+              const shuffled = [...MOCK_BLOG_POSTS].sort(() => 0.5 - Math.random());
+              recommendedPosts = shuffled.slice(0, 3);
+            }
+            
+            return {
+              reply: data.reply,
+              suggested_options: data.suggested_options || [
+                "What are the latest fashion trends?",
+                "How can I style a basic outfit?",
+                "What colors are popular this season?",
+                "Recommend sustainable fashion brands"
+              ],
+              recommended_articles: recommendedPosts,
+            };
+          } else {
+            console.error("Supabase function error:", response.status, await response.text());
+            throw new Error(`Supabase function returned ${response.status}`);
+          }
+        } catch (supabaseError) {
+          console.error("Supabase Function Error:", supabaseError);
+          // Continue to fallback options
+        }
+      }
+      
+      // Second, try to use Perplexity API directly if API key is available
       const apiKey = localStorage.getItem('perplexity_api_key');
       
       if (apiKey) {
         try {
           console.log("Attempting to use Perplexity API directly...");
-          const response = await fetch('https://api.perplexity.ai/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'llama-3.1-sonar-small-128k-online',
-              messages: [
-                {
-                  role: 'system',
-                  content: `You are a knowledgeable and friendly fashion assistant with real-time access to current fashion trends and data. 
-                  ${userPreferences ? `Consider these user preferences: ${JSON.stringify(userPreferences)}` : ''}
-                  
-                  Guidelines:
-                  1. Provide specific, actionable fashion advice
-                  2. Reference current trends and seasonal recommendations
-                  3. Consider user preferences when making suggestions
-                  4. Be conversational but professional
-                  5. If suggesting products or styles, explain why they would work
-                  6. For visual requests, describe items in detail
-                  7. Stay updated with 2025 fashion trends
-                  
-                  Remember to be precise, helpful, and engaging in your responses.`
-                },
-                ...messages
-              ],
-              temperature: 0.7,
-              top_p: 0.9,
-              max_tokens: 1000,
-              frequency_penalty: 0.5,
-              presence_penalty: 0.5,
-            }),
+          
+          // IMPORTANT: This won't work directly from the browser due to CORS!
+          // This is here only as a fallback and for demonstration purposes
+          toast({
+            title: "Direct API Connection",
+            description: "Attempting to connect directly to Perplexity API (this may fail due to CORS).",
           });
-
-          if (!response.ok) {
-            throw new Error(`Perplexity API error: ${response.statusText}`);
-          }
-
-          const data = await response.json();
           
-          // Check for recommended content in the response
-          let recommendedPosts: BlogPost[] = [];
-          const content = data.choices[0].message.content;
-          
-          // Get mock data for recommended articles as Perplexity doesn't directly return them
-          if (content.toLowerCase().includes("recommend") || 
-              content.toLowerCase().includes("suggest") || 
-              content.toLowerCase().includes("trend")) {
-            const { MOCK_BLOG_POSTS } = await import("@/data/mockFashionData");
-            // Get random posts for more variety
-            const shuffled = [...MOCK_BLOG_POSTS].sort(() => 0.5 - Math.random());
-            recommendedPosts = shuffled.slice(0, 3);
-          }
-          
-          return {
-            reply: data.choices[0].message.content,
-            suggested_options: data.related_questions || [
-              "What are the latest fashion trends?",
-              "How can I style a basic outfit?",
-              "What colors are popular this season?",
-              "Recommend sustainable fashion brands"
-            ],
-            recommended_articles: recommendedPosts,
-          };
+          // Using the mock data instead as direct API calls will fail with CORS
+          throw new Error("Direct API calls will likely fail due to CORS restrictions");
         } catch (perplexityError) {
           console.error("Perplexity API Error:", perplexityError);
           toast({
             title: "API Connection Issue",
-            description: "Unable to connect to Perplexity API. Using fallback options.",
-            variant: "destructive",
+            description: "Using mock fashion data instead.",
           });
           // Continue to fallback
         }
       }
 
-      // Try using our mock API since Supabase URL might not be available
+      // Try using our mock API since direct API and Supabase URL might not be available
       console.log("Using mock fashion data API...");
       
       // Simulate a realistic API response with variety

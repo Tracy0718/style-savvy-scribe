@@ -16,6 +16,11 @@ serve(async (req) => {
   try {
     const { messages, user_preferences } = await req.json();
 
+    // Check if PERPLEXITY_API_KEY is available
+    if (!PERPLEXITY_API_KEY) {
+      throw new Error('PERPLEXITY_API_KEY not found in environment variables');
+    }
+
     // Enhanced system message with more context and capabilities
     const systemMessage = {
       role: 'system',
@@ -34,6 +39,8 @@ serve(async (req) => {
       Remember to be precise, helpful, and engaging in your responses.`
     };
 
+    console.log("Sending request to Perplexity API with system message:", systemMessage);
+
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -46,20 +53,20 @@ serve(async (req) => {
         temperature: 0.7,
         top_p: 0.9,
         max_tokens: 1000,
-        return_images: true,
-        return_related_questions: true,
         frequency_penalty: 0.5,
         presence_penalty: 0.5,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'day', // Get the most recent fashion data
       }),
     });
 
     if (!response.ok) {
+      console.error(`Perplexity API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Error details: ${errorText}`);
       throw new Error(`Perplexity API error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log("Received response from Perplexity API:", data);
 
     // Enhanced response formatting
     return new Response(
