@@ -126,10 +126,6 @@ const SignIn = () => {
                   "Sign in"
                 )}
               </Button>
-              
-              <div className="text-center text-sm text-muted-foreground mt-4">
-                <p>Demo access: Any email with '@' and password with 6+ chars</p>
-              </div>
             </div>
           </form>
         </div>
