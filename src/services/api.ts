@@ -74,31 +74,31 @@ export const api = {
         }
       }
       
-      // Second, try to use Gemini API directly if no Supabase function is available
+      // Second, try to use Gemini API directly with the updated API endpoint
       const apiKey = localStorage.getItem('gemini_api_key') || "AIzaSyBUZ_IGvL8kLvHNuS9lCrGIq8QJ6AJxDGs";
       
       if (apiKey) {
         try {
           console.log("Attempting to use Gemini API directly...");
           
-          // Format messages for Gemini API
+          // Format messages for Gemini API with the correct format
           const formattedMessages = messages.map(msg => ({
-            role: msg.role,
+            role: msg.role === "user" ? "user" : "model",
             parts: [{ text: msg.content }]
           }));
 
           // Add system message for user preferences if available
           if (userPreferences && userPreferences.length > 0) {
             formattedMessages.unshift({
-              role: "system",
-              parts: [{ text: `Consider these user preferences: ${JSON.stringify(userPreferences)}` }]
+              role: "user",
+              parts: [{ text: `System: Consider these user preferences: ${JSON.stringify(userPreferences)}` }]
             });
           }
 
-          // Add default system message
+          // Add default system message as a user message with a special prefix
           formattedMessages.unshift({
-            role: "system",
-            parts: [{ text: `You are a knowledgeable and friendly fashion assistant with real-time access to current fashion trends and data.
+            role: "user",
+            parts: [{ text: `System: You are a knowledgeable and friendly fashion assistant with real-time access to current fashion trends and data.
               
               Guidelines:
               1. Provide specific, actionable fashion advice
@@ -112,13 +112,16 @@ export const api = {
               Remember to be precise, helpful, and engaging in your responses.` }]
           });
 
+          // Use a proxy service to avoid CORS issues
+          const corsProxyUrl = 'https://corsproxy.io/?';
+          const targetUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+          
           toast({
             title: "Direct API Connection",
-            description: "Attempting to connect directly to Gemini API (this may fail due to CORS).",
+            description: "Attempting to connect to Gemini API through a CORS proxy.",
           });
 
-          // This will likely fail due to CORS but we'll try anyway
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          const response = await fetch(`${corsProxyUrl}${encodeURIComponent(targetUrl)}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -164,7 +167,7 @@ export const api = {
           console.error("Gemini API Error:", geminiError);
           toast({
             title: "API Connection Issue",
-            description: "Using mock fashion data instead due to CORS restrictions.",
+            description: "Using mock fashion data as fallback.",
           });
           // Continue to fallback
         }

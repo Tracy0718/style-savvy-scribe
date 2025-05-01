@@ -44,20 +44,20 @@ serve(async (req) => {
 
     console.log("Sending request to Gemini API with system message:", systemMessage);
 
-    // Format messages for Gemini API
+    // Format messages for Gemini API - now using the correct format
     const formattedMessages = messages.map(msg => ({
-      role: msg.role,
+      role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }]
     }));
 
-    // Add system message at the beginning
+    // Add system message at the beginning - as a user message with special prefix
     formattedMessages.unshift({
-      role: "system",
-      parts: [{ text: systemMessage.content }]
+      role: "user",
+      parts: [{ text: "System: " + systemMessage.content }]
     });
 
-    // Make request to Gemini API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+    // Make request to the correct Gemini API endpoint
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
