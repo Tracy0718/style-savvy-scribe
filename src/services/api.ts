@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_FUNCTION_URL || "";
 
 export interface ChatMessage {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
 }
 
@@ -74,27 +74,97 @@ export const api = {
         }
       }
       
-      // Second, try to use Perplexity API directly if API key is available
-      const apiKey = localStorage.getItem('perplexity_api_key');
+      // Second, try to use Gemini API directly if no Supabase function is available
+      const apiKey = localStorage.getItem('gemini_api_key') || "AIzaSyBUZ_IGvL8kLvHNuS9lCrGIq8QJ6AJxDGs";
       
       if (apiKey) {
         try {
-          console.log("Attempting to use Perplexity API directly...");
+          console.log("Attempting to use Gemini API directly...");
           
-          // IMPORTANT: This won't work directly from the browser due to CORS!
-          // This is here only as a fallback and for demonstration purposes
+          // Format messages for Gemini API
+          const formattedMessages = messages.map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.content }]
+          }));
+
+          // Add system message for user preferences if available
+          if (userPreferences && userPreferences.length > 0) {
+            formattedMessages.unshift({
+              role: "system",
+              parts: [{ text: `Consider these user preferences: ${JSON.stringify(userPreferences)}` }]
+            });
+          }
+
+          // Add default system message
+          formattedMessages.unshift({
+            role: "system",
+            parts: [{ text: `You are a knowledgeable and friendly fashion assistant with real-time access to current fashion trends and data.
+              
+              Guidelines:
+              1. Provide specific, actionable fashion advice
+              2. Reference current trends and seasonal recommendations
+              3. Consider user preferences when making suggestions
+              4. Be conversational but professional
+              5. If suggesting products or styles, explain why they would work
+              6. For visual requests, describe items in detail
+              7. Stay updated with 2025 fashion trends
+              
+              Remember to be precise, helpful, and engaging in your responses.` }]
+          });
+
           toast({
             title: "Direct API Connection",
-            description: "Attempting to connect directly to Perplexity API (this may fail due to CORS).",
+            description: "Attempting to connect directly to Gemini API (this may fail due to CORS).",
           });
-          
-          // Using the mock data instead as direct API calls will fail with CORS
-          throw new Error("Direct API calls will likely fail due to CORS restrictions");
-        } catch (perplexityError) {
-          console.error("Perplexity API Error:", perplexityError);
+
+          // This will likely fail due to CORS but we'll try anyway
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: formattedMessages,
+              generationConfig: {
+                temperature: 0.7,
+                topP: 0.9,
+                maxOutputTokens: 1000,
+              },
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const replyContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process your request.";
+            
+            // Check for recommended content in the response
+            let recommendedPosts: BlogPost[] = [];
+            if (replyContent.toLowerCase().includes("recommend") || 
+                replyContent.toLowerCase().includes("suggest") || 
+                replyContent.toLowerCase().includes("trend")) {
+              const { MOCK_BLOG_POSTS } = await import("@/data/mockFashionData");
+              const shuffled = [...MOCK_BLOG_POSTS].sort(() => 0.5 - Math.random());
+              recommendedPosts = shuffled.slice(0, 3);
+            }
+            
+            return {
+              reply: replyContent,
+              suggested_options: [
+                "What are the latest fashion trends for 2025?",
+                "How to style monochromatic outfits?",
+                "Which accessories are trending this season?",
+                "Best sustainable fashion brands to follow?",
+              ],
+              recommended_articles: recommendedPosts,
+            };
+          } else {
+            throw new Error(`Gemini API error: ${response.status}`);
+          }
+        } catch (geminiError) {
+          console.error("Gemini API Error:", geminiError);
           toast({
             title: "API Connection Issue",
-            description: "Using mock fashion data instead.",
+            description: "Using mock fashion data instead due to CORS restrictions.",
           });
           // Continue to fallback
         }

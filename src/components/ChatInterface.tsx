@@ -36,8 +36,8 @@ const ChatInterface = () => {
   const [loading, setLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<APIChatMessage[]>([]);
   const [showPhotos, setShowPhotos] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('perplexity_api_key') || '');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem('perplexity_api_key'));
+  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || 'AIzaSyBUZ_IGvL8kLvHNuS9lCrGIq8QJ6AJxDGs');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'checking'|'connected'|'failed'>('checking');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +54,11 @@ const ChatInterface = () => {
       setChatHistory([
         { role: "assistant", content: "Hi! I'm your personal Style Savvy Scribe. What fashion topics are you interested in?" }
       ]);
+    }
+
+    // Set the API key in localStorage
+    if (apiKey) {
+      localStorage.setItem('gemini_api_key', apiKey);
     }
 
     // Check connection status
@@ -74,6 +79,34 @@ const ChatInterface = () => {
           setConnectionStatus('connected');
           return;
         }
+      }
+      
+      // Check if direct API access works (will likely fail due to CORS)
+      try {
+        const testAPI = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              role: "user",
+              parts: [{ text: "Hello" }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.9,
+              maxOutputTokens: 1000,
+            },
+          }),
+        });
+        
+        if (testAPI.ok) {
+          setConnectionStatus('connected');
+          return;
+        }
+      } catch (error) {
+        console.error("Direct API test failed:", error);
       }
       
       // If we've reached here, we're using fallbacks
@@ -363,7 +396,7 @@ const ChatInterface = () => {
 
   const handleApiKeySubmit = () => {
     if (apiKey.trim()) {
-      localStorage.setItem('perplexity_api_key', apiKey.trim());
+      localStorage.setItem('gemini_api_key', apiKey.trim());
       setShowApiKeyInput(false);
       toast({
         title: "API Key Saved",
@@ -379,13 +412,13 @@ const ChatInterface = () => {
       <Card className="flex-1 flex flex-col overflow-hidden shadow-xl border-2 border-fashion-pink/20 bg-gradient-to-bl from-secondary/10 to-fashion-beige/40 backdrop-blur-2xl">
         {showApiKeyInput ? (
           <div className="p-4 space-y-4">
-            <h3 className="text-lg font-semibold text-center">Enter Perplexity API Key</h3>
+            <h3 className="text-lg font-semibold text-center">Enter Gemini API Key</h3>
             <div className="flex gap-2">
               <Input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter your Perplexity API key..."
+                placeholder="Enter your Gemini API key..."
                 className="flex-1"
               />
               <Button onClick={handleApiKeySubmit}>Save Key</Button>

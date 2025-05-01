@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const PERPLEXITY_API_KEY = Deno.env.get('PERPLEXITY_API_KEY');
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,10 +16,13 @@ serve(async (req) => {
   try {
     const { messages, user_preferences } = await req.json();
 
-    // Check if PERPLEXITY_API_KEY is available
-    if (!PERPLEXITY_API_KEY) {
-      throw new Error('PERPLEXITY_API_KEY not found in environment variables');
+    // Check if GEMINI_API_KEY is available
+    if (!GEMINI_API_KEY) {
+      console.log("Using provided API Key as environment variable is not available");
     }
+    
+    // Use provided key or the one from environment
+    const apiKey = GEMINI_API_KEY || "AIzaSyBUZ_IGvL8kLvHNuS9lCrGIq8QJ6AJxDGs";
 
     // Enhanced system message with more context and capabilities
     const systemMessage = {
@@ -39,40 +42,59 @@ serve(async (req) => {
       Remember to be precise, helpful, and engaging in your responses.`
     };
 
-    console.log("Sending request to Perplexity API with system message:", systemMessage);
+    console.log("Sending request to Gemini API with system message:", systemMessage);
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    // Format messages for Gemini API
+    const formattedMessages = messages.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.content }]
+    }));
+
+    // Add system message at the beginning
+    formattedMessages.unshift({
+      role: "system",
+      parts: [{ text: systemMessage.content }]
+    });
+
+    // Make request to Gemini API
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [systemMessage, ...messages],
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 1000,
-        frequency_penalty: 0.5,
-        presence_penalty: 0.5,
+        contents: formattedMessages,
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          maxOutputTokens: 1000,
+        },
       }),
     });
 
     if (!response.ok) {
-      console.error(`Perplexity API error: ${response.status} ${response.statusText}`);
+      console.error(`Gemini API error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
       console.error(`Error details: ${errorText}`);
-      throw new Error(`Perplexity API error: ${response.statusText}`);
+      throw new Error(`Gemini API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("Received response from Perplexity API:", data);
+    console.log("Received response from Gemini API:", data);
+
+    // Extract the response content from Gemini API structure
+    const replyContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process your request.";
 
     // Enhanced response formatting
     return new Response(
       JSON.stringify({
-        reply: data.choices[0].message.content,
-        suggested_options: data.related_questions || [],
+        reply: replyContent,
+        suggested_options: [
+          "What are the latest fashion trends?",
+          "How can I style a basic outfit?",
+          "What colors are popular this season?",
+          "Recommend sustainable fashion brands"
+        ],
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
